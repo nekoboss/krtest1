@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>開啟相機</title>
+  <style>
+    button {
+      width: 200px; 
+      height: 50px; 
+      font-size: 18px; 
+      margin-bottom: 10px; /* 添加按鈕間距 */
+    }
+  </style>
+  <title>取得位置</title>
+</head>
+<body>
+  <button onclick="openCamera()">開啟相機</button>
+  <button onclick="getLocation()">取得位置</button> 
+<body onload="getLocation()">
+  <script>
+    // 檢測是否在 LINE WebView 中
+    function isLineWebView() {
+      //const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      //return /Line/i.test(userAgent);
+    }
+    if (isLineWebView()) {
+      // alert('請在外部瀏覽器（如 Chrome 或 Safari）中開啟以使用相機功能');
+      // 自動重定向到外部瀏覽器中
+      // window.location.href = 'https://krtest.pages.dev'; // 這裡的網址可以改為你的實際網址
+    }
+    // 開啟相機功能
+    function openCamera() {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }) 
+          .then(function (stream) {
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            document.body.appendChild(video);
+          })
+          .catch(function (error) {
+            console.error('無法開啟相機', error);
+          });
+      } else {
+        alert('您的瀏覽器不支援相機功能');
+      }
+    }
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+      } else { 
+        alert("您的瀏覽器不支援地理位置定位功能");
+        closeWindow(); // 關閉網頁
+      }
+    }
+
+    function showPosition(position) {
+      alert("你的座標位置：\n緯度: " + position.coords.latitude + 
+            "\n經度: " + position.coords.longitude);
+      // 將位置資訊儲存到 localStorage
+      localStorage.setItem('latitude', position.coords.latitude);
+      localStorage.setItem('longitude', position.coords.longitude);
+      // 使用 postMessage API 將位置資訊傳送給上一頁
+      if (window.opener) {
+        window.opener.postMessage({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }, '*');
+      }
+      closeWindow(); // 關閉網頁
+    }
+
+    function showError(error) {
+      alert(getErrorMessage(error)); // 顯示錯誤訊息
+      closeWindow(); // 關閉網頁
+    }
+    function getErrorMessage(error) {
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          alert("您拒絕了位置分享的請求。");
+          break;
+          return "您拒絕了位置分享的請求。";
+        case error.POSITION_UNAVAILABLE:
+          alert("無法取得位置資訊。");
+          break;
+          return "無法取得位置資訊。";
+        case error.TIMEOUT:
+          alert("取得位置資訊逾時。");
+          break;
+          return "取得位置資訊逾時。";
+        case error.UNKNOWN_ERROR:
+          alert("發生未知的錯誤。");
+          break;
+          return "發生未知的錯誤。";
+        default:
+          return "發生錯誤。"; 
+      }
+    }
+    function closeWindow() {
+      window.close();
+    }
+  </script>
+</body>
+</html>
